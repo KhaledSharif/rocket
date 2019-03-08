@@ -6,8 +6,6 @@ use rocket::State;
 
 #[macro_use] extern crate serde_derive;
 
-// #[macro_use(bson, doc)]
-// extern crate bson;
 extern crate mongodb;
 
 extern crate rocket_contrib;
@@ -26,24 +24,24 @@ use mongodb::coll::Collection;
 use mongodb::db::ThreadedDatabase;
 use mongodb::Document;
 
-fn get_time() -> u64 
+fn get_time() -> u64
 {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
 }
 
 #[derive(Serialize, Deserialize)]
-struct Message 
+struct Message
 {
     key   : String,
     value : String,
     time  : u64,
 }
 
-impl Message 
+impl Message
 {
-    fn to_document(&self) -> Document 
+    fn to_document(&self) -> Document
     {
-        doc! 
+        doc!
         {
             "time" : self.time,
             "key"  : self.key.clone(),
@@ -62,7 +60,7 @@ impl DocumentToMessage for Document
 {
     fn to_message(&self) -> Message
     {
-        Message 
+        Message
         {
             key   : self.get_str("key").ok().unwrap().to_string(),
             value : self.get_str("value").ok().unwrap().to_string(),
@@ -85,16 +83,16 @@ fn get_documents(get_request : &GetRequest, mongo_collection: &Collection) -> Ve
         .collect::<Vec<Document>>()
 }
 
-struct GetRequest 
+struct GetRequest
 {
     key     : String,
     time_gt : Option<u64>,
     time_lt : Option<u64>,
 }
 
-impl GetRequest 
+impl GetRequest
 {
-    fn to_query(&self) -> Document 
+    fn to_query(&self) -> Document
     {
         let mut document = doc!{
             "key": self.key.clone(),
@@ -115,18 +113,18 @@ impl GetRequest
     }
 }
 
-struct PostRequest 
+struct PostRequest
 {
     time  : u64,
     key   : String,
     value : String,
 }
 
-impl PostRequest 
+impl PostRequest
 {
-    fn to_message(&self) -> Message 
+    fn to_message(&self) -> Message
     {
-        Message 
+        Message
         {
             key   : self.key.clone(),
             value : self.value.clone(),
@@ -163,7 +161,7 @@ impl OptionsArray
         self.keys.push(key.to_string());
         self.values.push(value.to_string());
     }
-    fn new() -> Self 
+    fn new() -> Self
     {
         OptionsArray
         {
@@ -173,9 +171,9 @@ impl OptionsArray
     }
 }
 
-fn create_options_map(options: PathBuf) -> Option <OptionsArray> 
+fn create_options_map(options: PathBuf) -> Option <OptionsArray>
 {
-    let options_string_array : Vec<&str> = 
+    let options_string_array : Vec<&str> =
         options
             .iter()
             .map(|x| x.to_str().unwrap())
@@ -186,7 +184,7 @@ fn create_options_map(options: PathBuf) -> Option <OptionsArray>
     }
     let mut i = 0;
     let mut options_array : OptionsArray = OptionsArray::new();
-    while i < (options_string_array.len() - 1) 
+    while i < (options_string_array.len() - 1)
     {
         options_array.insert(
             options_string_array[i],
@@ -201,7 +199,7 @@ fn create_options_map(options: PathBuf) -> Option <OptionsArray>
 fn post(state: State<Collection>, options: PathBuf) -> Result <status::Created <String>, status::BadRequest <String>>
 {
     let options_array : OptionsArray;
-    match create_options_map(options) 
+    match create_options_map(options)
     {
         Some(x) => {
             options_array = x;
@@ -226,18 +224,18 @@ fn post(state: State<Collection>, options: PathBuf) -> Result <status::Created <
 fn get(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message>>, status::BadRequest <String>>
 {
     let options_array : OptionsArray;
-    match create_options_map(options) 
+    match create_options_map(options)
     {
-        Some(x) => 
+        Some(x) =>
         {
             options_array = x;
         },
-        None => 
+        None =>
         {
             return Err(status::BadRequest(None));
         }
     }
-    fn insert_time_option(json_key: &str, oa: &OptionsArray) -> Option <u64> 
+    fn insert_time_option(json_key: &str, oa: &OptionsArray) -> Option <u64>
     {
         if oa.contains_key(json_key)
         {
@@ -258,7 +256,7 @@ fn get(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message
     Ok(Json(messages))
 }
 
-fn rocket(mc: Collection, cors: Cors) -> rocket::Rocket 
+fn rocket(mc: Collection, cors: Cors) -> rocket::Rocket
 {
     rocket::ignite()
         .mount("/", routes![get, post])
@@ -266,13 +264,13 @@ fn rocket(mc: Collection, cors: Cors) -> rocket::Rocket
         .manage(mc)
 }
 
-fn main() 
+fn main()
 {
     // =====================================================
     // This Rocket instance uses a State
     // see: https://github.com/SergioBenitez/Rocket/issues/53#issuecomment-277149045
     // =====================================================
-    let mongo_collection = Client::connect("localhost", 27017)
+    let mongo_collection = Client::connect("mongo", 27017)
         .expect("failed to initialize mongo client")
         .db("iot")
         .collection("key_value");
@@ -288,7 +286,7 @@ fn main()
         .collect();
     let allowed_headers: AllowedHeaders = AllowedHeaders::all();
 
-    let options = rocket_cors::Cors 
+    let options = rocket_cors::Cors
     {
         allowed_origins,
         allowed_methods,
@@ -299,4 +297,3 @@ fn main()
 
     rocket(mongo_collection, options).launch();
 }
-

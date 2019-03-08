@@ -1,6 +1,7 @@
 version: "3.7"
 services:
   rocket:
+    container_name: rocket
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,8 +9,13 @@ services:
       - "8000:8000"
 
   mongo:
-    image: mongo:latest
+    container_name: mongo
+    image: andresvidal/rpi3-mongodb3:latest
     volumes: 
-      - /mongodb_data:/data/db
+      - /data/db:/data/db
+      - /data/configdb:/data/configdb
     ports:
       - "27017:27017"
+      - "28017:28017"
+    command: mongod
+    
