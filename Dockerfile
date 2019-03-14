@@ -5,7 +5,7 @@ RUN rustup default nightly
 
 WORKDIR /usr/src/myapp
 COPY ./Cargo.toml .
-COPY ./src .
+COPY ./src ./src
 RUN cargo build --release
 
 CMD ROCKET_ADDRESS=0.0.0.0 cargo run --release
