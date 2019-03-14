@@ -256,6 +256,12 @@ fn get(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message
     Ok(Json(messages))
 }
 
+#[get("/time")]
+fn get_time_request(state: State<Collection>) -> Result <String, status::BadRequest <String>>
+{
+    Ok(get_time().to_string())
+}
+
 fn rocket(mc: Collection, cors: Cors) -> rocket::Rocket
 {
     rocket::ignite()
