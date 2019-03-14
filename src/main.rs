@@ -196,7 +196,7 @@ fn create_options_map(options: PathBuf) -> Option <OptionsArray>
 }
 
 #[post("/message/<options..>")]
-fn post(state: State<Collection>, options: PathBuf) -> Result <status::Created <String>, status::BadRequest <String>>
+fn post_message_request(state: State<Collection>, options: PathBuf) -> Result <status::Created <String>, status::BadRequest <String>>
 {
     let options_array : OptionsArray;
     match create_options_map(options)
@@ -221,7 +221,7 @@ fn post(state: State<Collection>, options: PathBuf) -> Result <status::Created <
 }
 
 #[get("/message/<options..>")]
-fn get(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message>>, status::BadRequest <String>>
+fn get_message_request(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message>>, status::BadRequest <String>>
 {
     let options_array : OptionsArray;
     match create_options_map(options)
@@ -257,7 +257,7 @@ fn get(state: State<Collection>, options: PathBuf) -> Result <Json <Vec <Message
 }
 
 #[get("/time")]
-fn get_time_request(state: State<Collection>) -> Result <String, status::BadRequest <String>>
+fn get_time_request(_state: State<Collection>) -> Result <String, status::BadRequest <String>>
 {
     Ok(get_time().to_string())
 }
@@ -265,7 +265,7 @@ fn get_time_request(state: State<Collection>) -> Result <String, status::BadRequ
 fn rocket(mc: Collection, cors: Cors) -> rocket::Rocket
 {
     rocket::ignite()
-        .mount("/", routes![get, post])
+        .mount("/", routes![get_message_request, get_time_request, post_message_request])
         .attach(cors)
         .manage(mc)
 }
